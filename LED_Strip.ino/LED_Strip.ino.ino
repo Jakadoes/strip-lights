@@ -31,7 +31,7 @@ decode_results results;      // create instance of 'decode_results'
 int r, g, b;
 
 //*****PARAMETERS*****
-int Mode = 3;//set starting mode
+int Mode = 6;//set starting mode
 bool ON = true;
 int ModeAlreadyRan = 0; //used to make intro of mode run only once
 
@@ -123,10 +123,7 @@ int CycleSun(int sunPos) {//function that is called at the end of every sun cycl
 
 }
 
-
 //****END FUNCTIONS****
-
-
 
 void setup() {
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
@@ -149,9 +146,87 @@ void loop() {
     irrecv.resume(); // receive the next value
   }
   if (ON) {
+    //Mode 6 - rainbow
+    //TotalRequiredPositions = 1275 (5*255)
+    //clear previous lights
+    if(Mode == 6){
+      if (ModeAlreadyRan == 0) {
+        for (int i = 0 ; i < NUM_LEDS ; i++) {
+          leds[i] = CRGB(0,0,0);
+        }
+        FastLED.show();
+        CheckForModeChange(100);
+        ModeAlreadyRan = 1;
+      }
+      int colourCal = 20; //add artificial scaling for tweaking
+      int lightDelta = 1275/NUM_LEDS; 
+      int leds_stages = NUM_LEDS/5; 
+      leds[0] = CRGB(255,0,0);
+      //follow colour picker hue, discretized 
+      for (int i = 1 ; i < NUM_LEDS  ; i++) {
+        if(i< leds_stages * 1 && !(leds[i-1].g > 255- lightDelta)){ //dont overflow colour mutation 
+        leds[i] = CRGB(leds[i-1].r,leds[i-1].g + lightDelta,leds[i-1].b);
+        }
+        else if(i<leds_stages * 2 && !(leds[i-1].r < lightDelta)){
+        leds[i] = CRGB(leds[i-1].r - lightDelta,leds[i-1].g,leds[i-1].b);
+        }
+        else if(i<leds_stages * 3 && !(leds[i-1].b > 255- lightDelta)){
+        leds[i] = CRGB(leds[i-1].r,leds[i-1].g,leds[i-1].b + lightDelta);
+        }
+        else if(i<leds_stages * 4 && !(leds[i-1].g < lightDelta)){
+        leds[i] = CRGB(leds[i-1].r,leds[i-1].g - lightDelta,leds[i-1].b);
+        }
+        else if(i<leds_stages * 7 && !(leds[i-1].r > 255- lightDelta)){
+        leds[i] = CRGB(leds[i-1].r + lightDelta,leds[i-1].g ,leds[i-1].b);
+        }
+      }
+      FastLED.show();
+      CheckForModeChange(100);
+    }
+    //Mode 5 - Lightning mqueen
+    if (Mode == 5){
+      //clear previous lights
+      if (ModeAlreadyRan == 0) {
+        for (int i = 0 ; i < NUM_LEDS ; i++) {
+          leds[i] = CRGB(0,0,0);
+        }
+        FastLED.show();
+        CheckForModeChange(100);
+        ModeAlreadyRan = 1;
+      }
+      //make 3 cars on starting line
+      int startline_i = 10;
+      leds[startline_i] = CRGB(255,0,0);
+      leds[startline_i - 1] = CRGB(0,255,0);
+      leds[startline_i - 2] = CRGB(0,0,255);
+      FastLED.show();
+      CheckForModeChange(100);
 
+      //count down to race start
+      int countdown_i = 20;
+      leds[countdown_i] = CRGB(255,200,0);
+      leds[countdown_i + 1] = CRGB(255,200,0);
+      leds[countdown_i + 2] = CRGB(255,200,0);
+      FastLED.show();
+      CheckForModeChange(1000);
+      leds[countdown_i] = CRGB(0,0,0);
+      FastLED.show();
+      CheckForModeChange(1000);
+      leds[countdown_i + 1] = CRGB(0,0,0);
+      FastLED.show();
+      CheckForModeChange(1000);
+      leds[countdown_i + 2] = CRGB(0,0,0);
+      FastLED.show();
+      CheckForModeChange(1000);
+      //race starts, loop for 200 laps 
+      for (int i = 0 ; i < NUM_LEDS ; i++) {
+        
+      }
+
+
+
+    }
     //Mode 4 - sashas's VISION - sunrise / set
-
     if (Mode == 4) {
       if (ModeAlreadyRan == 0) {
 
