@@ -53,6 +53,7 @@ int ModeAlreadyRan = 0; //used to make intro of mode run only once
 //process IR information
 void translateIR() // takes action based on IR code received
 {
+  int modeStart = Mode;
   switch (results.value)
   {
   case 0xFFA25D:
@@ -138,6 +139,10 @@ void translateIR() // takes action based on IR code received
     Serial.println(" other button / couldnt read  ");
     Mode = Mode +1;
     break;
+  if(modeStart != Mode)
+  {
+    ModeAlreadyRan = 0;
+  }
   } // End Case
 
   delay(500); // Do not get immediate repeat
@@ -199,6 +204,8 @@ void loop()
   {
     //Mode 6 - rainbow
     //clear previous lights
+    //Serial.println(Mode);
+    //CheckForModeChange(100);
     if (Mode == 6)
     {
       Rainbow();
@@ -222,112 +229,7 @@ void loop()
     //Mode 4 - sashas's VISION - sunrise / set
     else if (Mode == 4)
     {
-      if (ModeAlreadyRan == 0)
-      {
-
-        //ModeAlreadyRan = 1;
-      }
-
-      //PHASE 1: SUN ENTRACE
-      if (sunPos < 5)
-      {
-        for (int i = 0; i < 49; i++)
-        {
-          //set sun
-          if (i == sunPos)
-            leds[i] = sunColour;
-          //set near rays
-          else if (abs(sunPos - i) <= nearRayDist)
-          {
-            leds[i] = nearRayColourSunrise;
-          }
-          //set darkness
-          else
-            leds[i] = CRGB(0, 0, 0);
-        } //end phase 1
-      }
-      //PHASE 2: Sky FILL (gradient)
-      else if (sunPos < 10)
-      {
-        for (int i = 0; i < 49; i++)
-        {
-          if (i == sunPos)
-            leds[i] = sunColour;
-          else if (abs(sunPos - i) <= nearRayDist)
-          {
-            leds[i] = nearRayColourSunrise;
-          }
-          else if (abs(sunPos - i) >= sunsetPurpleDist)
-          {
-            leds[i] = sunsetPurpleColour;
-          }
-          else
-            leds[i] = farRayColourSunset;
-
-        } //end phase 2
-      }
-      //PHASE 3: DAYTIME
-      else if (sunPos < (NUM_LEDS * 3) / 4)
-      {
-        for (int i = 0; i < 49; i++)
-        {
-          if (i == sunPos)
-            leds[i] = sunColour;
-          else
-            leds[i] = skyColour;
-          ModeAlreadyRan = 1;
-        } //end phase 3
-      }
-      //PHASE 4: SUNSET
-      else if (sunPos < (NUM_LEDS - 5))
-      {
-        //set colours
-        for (int i = 0; i < 49; i++)
-        {
-          if (i == sunPos)
-            leds[i] = sunSetColour;
-          else if (abs(sunPos - i) <= nearRayDist)
-          {
-            leds[i] = nearRayColourSunrise;
-          }
-          else if (abs(sunPos - i) >= sunsetPurpleDist)
-          {
-            leds[i] = sunsetPurpleColour;
-          }
-          else
-            leds[i] = farRayColourSunset;
-        }
-      } //end phase 4
-      //PHASE 5: SUN exit
-      else
-      {
-        for (int i = 0; i < 49; i++)
-        {
-          //set sun
-          if (i == sunPos)
-            leds[i] = sunSetColour;
-          //set near rays
-          else if (abs(sunPos - i) <= nearRayDist)
-          {
-            leds[i] = nearRayColourSunrise;
-          }
-          //set darkness
-          else
-            leds[i] = CRGB(0, 0, 0);
-        } //end phase 5
-      }
-
-      FastLED.show();
-      sunPos = CycleSun(sunPos); //move sun
-      int posholder = sunPos;    //check for change during wait
-      for (int i = 0; i < sunTime / 1000; i++)
-      {
-        CheckForModeChange(1000);
-        if (posholder != sunPos)
-        {
-          break;
-        }
-      }
+      SunCycles();
     } //end mode 4
 
     //Mode 3 - Canada day mode
@@ -596,6 +498,118 @@ int Cars()
   }
 }
 
+int SunCycles()
+{
+  bool modeChanged = false; 
+      if (ModeAlreadyRan == 0)
+      {
+
+        ModeAlreadyRan = 1;
+      }
+
+      //PHASE 1: SUN ENTRACE
+      if (sunPos < 5)
+      {
+        for (int i = 0; i < 49; i++)
+        {
+          //set sun
+          if (i == sunPos)
+            leds[i] = sunColour;
+          //set near rays
+          else if (abs(sunPos - i) <= nearRayDist)
+          {
+            leds[i] = nearRayColourSunrise;
+          }
+          //set darkness
+          else
+            leds[i] = CRGB(0, 0, 0);
+        } //end phase 1
+      }
+      //PHASE 2: Sky FILL (gradient)
+      else if (sunPos < 10)
+      {
+        for (int i = 0; i < 49; i++)
+        {
+          if (i == sunPos)
+            leds[i] = sunColour;
+          else if (abs(sunPos - i) <= nearRayDist)
+          {
+            leds[i] = nearRayColourSunrise;
+          }
+          else if (abs(sunPos - i) >= sunsetPurpleDist)
+          {
+            leds[i] = sunsetPurpleColour;
+          }
+          else
+            leds[i] = farRayColourSunset;
+
+        } //end phase 2
+      }
+      //PHASE 3: DAYTIME
+      else if (sunPos < (NUM_LEDS * 3) / 4)
+      {
+        for (int i = 0; i < 49; i++)
+        {
+          if (i == sunPos)
+            leds[i] = sunColour;
+          else
+            leds[i] = skyColour;
+          ModeAlreadyRan = 1;
+        } //end phase 3
+      }
+      //PHASE 4: SUNSET
+      else if (sunPos < (NUM_LEDS - 5))
+      {
+        //set colours
+        for (int i = 0; i < 49; i++)
+        {
+          if (i == sunPos)
+            leds[i] = sunSetColour;
+          else if (abs(sunPos - i) <= nearRayDist)
+          {
+            leds[i] = nearRayColourSunrise;
+          }
+          else if (abs(sunPos - i) >= sunsetPurpleDist)
+          {
+            leds[i] = sunsetPurpleColour;
+          }
+          else
+            leds[i] = farRayColourSunset;
+        }
+      } //end phase 4
+      //PHASE 5: SUN exit
+      else
+      {
+        for (int i = 0; i < 49; i++)
+        {
+          //set sun
+          if (i == sunPos)
+            leds[i] = sunSetColour;
+          //set near rays
+          else if (abs(sunPos - i) <= nearRayDist)
+          {
+            leds[i] = nearRayColourSunrise;
+          }
+          //set darkness
+          else
+            leds[i] = CRGB(0, 0, 0);
+        } //end phase 5
+      }
+
+      FastLED.show();
+      sunPos = CycleSun(sunPos); //move sun
+      int posholder = sunPos;    //check for change during wait
+      for (int i = 0; i < sunTime / 1000; i++)
+      {
+        modeChanged = CheckForModeChange(1000);
+        if(modeChanged){return 0;}
+        if (posholder != sunPos)
+        {
+          break;
+        }
+      }
+}
+
 int CanadaDay(){
   bool modeChanged = false;
   if (ModeAlreadyRan == 0)
@@ -634,7 +648,7 @@ int CanadaDay(){
           else
           {
             leds[i] = CRGB::White;
-            leds[49 - i] = CRGB::White;
+            leds[NUM_LEDS - i] = CRGB::White;
             FastLED.show();
             modeChanged = CheckForModeChange(20);
             if(modeChanged){return 0;}
@@ -652,6 +666,7 @@ int DimMode()
         {
           leds[i] = CRGB(0,0,0);
         }
+        ModeAlreadyRan = 1;
       }
 
       for (int i = 0; i <= NUM_LEDS; i += 9)
@@ -664,6 +679,7 @@ int DimMode()
 }
 
 int FlashingLights(){
+  bool modeChanged = false;
   leds[40] = CRGB(0, 0, 0);
       leds[39] = CRGB(0, 0, 0);
       FastLED.show();
@@ -681,7 +697,8 @@ int FlashingLights(){
         leds[i - 1] = CRGB(25, 0, 0);
         leds[i] = CRGB(r, g, b);
         FastLED.show();
-        CheckForModeChange(100);
+        modeChanged = CheckForModeChange(100);
+        if(modeChanged){return 0;}
         g -= 1;
         b += 5;
       }
