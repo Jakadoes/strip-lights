@@ -135,7 +135,9 @@ void translateIR() // takes action based on IR code received
     break;
 
   default:
-    Serial.println(" other button   ");
+    Serial.println(" other button / couldnt read  ");
+    Mode = Mode +1;
+    break;
   } // End Case
 
   delay(500); // Do not get immediate repeat
@@ -192,7 +194,7 @@ void loop()
     translateIR();
     irrecv.resume(); // receive the next value
   }
-ProgramStart: //label which is accessed by goto commands
+
   if (ON)
   {
     //Mode 6 - rainbow
@@ -202,7 +204,7 @@ ProgramStart: //label which is accessed by goto commands
       Rainbow();
     }
     //Mode 5 - Lightning mqueen
-    if (Mode == 5)
+    else if (Mode == 5)
     {
       //clear previous lights
       if (ModeAlreadyRan == 0)
@@ -218,7 +220,7 @@ ProgramStart: //label which is accessed by goto commands
       Cars();
     } //end mode 5
     //Mode 4 - sashas's VISION - sunrise / set
-    if (Mode == 4)
+    else if (Mode == 4)
     {
       if (ModeAlreadyRan == 0)
       {
@@ -329,26 +331,32 @@ ProgramStart: //label which is accessed by goto commands
     } //end mode 4
 
     //Mode 3 - Canada day mode
-    if (Mode == 3)
+    else if (Mode == 3)
     {
       CanadaDay();
     }
     //Mode 2 - dim mode
-    if (Mode == 2)
+    else if (Mode == 2)
     {
       DimMode();
     }
     //Mode 1 - pink lights
-    if (Mode == 1)
+    else if (Mode == 1)
     {
      PinkLights(); 
     }
 
     //Mode 0 - flashing lights
-    if (Mode == 0)
+    else if (Mode == 0)
     {
       FlashingLights();
     } //end mode 0
+    else
+    {
+      Serial.println("WARNING, ILLEGITIMATE MODE SELECTED, REVERTING TO MODE 0 (make sure any new modes added follow the if/ else if structure");
+      Mode = 0;
+    }
+    
   }   //end if(ON)
 } //end loop
 
@@ -483,7 +491,8 @@ int Cars()
         king.Move(leds, 0);
       }
       LightGroup::RedrawGroups(leds);
-      CheckForModeChange(20);
+      modeChanged = CheckForModeChange(20);
+      if(modeChanged){return 0;}
     }
   }
   //loop one last time, but slow
@@ -508,17 +517,13 @@ int Cars()
     CheckForModeChange(100);
     king.ChangeColour(0, CRGB(10, 7, 15));
     LightGroup::RedrawGroups(leds);
-    if (CheckForModeChange(100))
-    {
-      return NULL;
-    }
+    modeChanged = CheckForModeChange(100);
+    if (modeChanged){return 0;}
   }
   king.ChangeColour(0, CRGB(10, 7, 15));
   LightGroup::RedrawGroups(leds);
-  if (CheckForModeChange(1000))
-  {
-    return NULL;
-  }
+  modeChanged = CheckForModeChange(1000);
+  if (modeChanged){return 0;}
   //lightning stops
   for (int i = 0; i < 2; i++)
   {
