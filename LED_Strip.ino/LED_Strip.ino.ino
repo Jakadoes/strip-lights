@@ -31,13 +31,16 @@ IRrecv irrecv(IRData);  // create instance of 'irrecv'
 decode_results results; // create instance of 'decode_results'
 int r, g, b;
 
- //cars mode objects
-CRGB tempColours[1] = {CRGB(255,0,0)};
-LightGroup mqueen(tempColours, 1, 0, leds); 
-CRGB tempColours2[1] = {CRGB(0,200,0)};
-LightGroup chick(tempColours2,1,1,leds);
-CRGB tempColours3[1] = {CRGB(0,0,200)};//WARNING: only group array and object definitions together, otherwise there may be a weird error 
-LightGroup king(tempColours3,1,2,leds);
+//cars mode objects
+CRGB tempColours4[3] = {CRGB(100, 100, 100), CRGB(0, 0, 0), CRGB(100, 100, 100)};
+LightGroup finishLine(tempColours4, 3, 3, leds);
+CRGB tempColours[1] = {CRGB(255, 0, 0)};
+LightGroup mqueen(tempColours, 1, 0, leds);
+CRGB tempColours2[1] = {CRGB(0, 200, 0)};
+LightGroup chick(tempColours2, 1, 1, leds);
+CRGB tempColours3[1] = {CRGB(0, 0, 200)}; //WARNING: only group array and object definitions together, otherwise there may be a weird error
+LightGroup king(tempColours3, 1, 2, leds);
+
 //*****End Objects*****
 
 //*****PARAMETERS*****
@@ -45,7 +48,6 @@ int Mode = 5; //set starting mode
 bool ON = true;
 int ModeAlreadyRan = 0; //used to make intro of mode run only once
 //*****END PARAMETERS*****
-
 
 //****FUNCTIONS****
 //process IR information
@@ -107,20 +109,23 @@ void translateIR() // takes action based on IR code received
     break;
   case 0xFF10EF:
     Serial.println("4");
-    Serial.println("4");
     Mode = 4;
     break;
   case 0xFF38C7:
     Serial.println("5");
+    Mode = 5;
     break;
   case 0xFF5AA5:
     Serial.println("6");
+    Mode = 6;
     break;
   case 0xFF42BD:
     Serial.println("7");
+    Mode = 7;
     break;
   case 0xFF4AB5:
     Serial.println("8");
+    Mode = 8;
     break;
   case 0xFF52AD:
     Serial.println("9");
@@ -176,7 +181,6 @@ void setup()
   //Serial.println("IR Receiver Button Decode");
   irrecv.enableIRIn(); // Start the receiver
 
- 
   //read this to understand issues with interrupt better:https://github.com/FastLED/FastLED/wiki/Interrupt-problems
 } //************end setup()***********
 
@@ -188,53 +192,14 @@ void loop()
     translateIR();
     irrecv.resume(); // receive the next value
   }
+ProgramStart: //label which is accessed by goto commands
   if (ON)
   {
     //Mode 6 - rainbow
-    //TotalRequiredPositions = 1275 (5*255)
     //clear previous lights
     if (Mode == 6)
     {
-      if (ModeAlreadyRan == 0)
-      {
-        for (int i = 0; i < NUM_LEDS; i++)
-        {
-          leds[i] = CRGB(0, 0, 0);
-        }
-        FastLED.show();
-        CheckForModeChange(100);
-        ModeAlreadyRan = 1;
-      }
-      int colourCal = 20; //add artificial scaling for tweaking
-      int lightDelta = 1275 / NUM_LEDS;
-      int leds_stages = NUM_LEDS / 5;
-      leds[0] = CRGB(255, 0, 0);
-      //follow colour picker hue, discretized
-      for (int i = 1; i < NUM_LEDS; i++)
-      {
-        if (i < leds_stages * 1 && !(leds[i - 1].g > 255 - lightDelta)) //increase green
-        { //dont overflow colour mutation
-          leds[i] = CRGB(leds[i - 1].r, leds[i - 1].g + lightDelta, leds[i - 1].b);
-        }
-        else if (i < leds_stages * 2 && !(leds[i - 1].r < lightDelta))//decrease red
-        {
-          leds[i] = CRGB(leds[i - 1].r - lightDelta, leds[i - 1].g, leds[i - 1].b);
-        }
-        else if (i < leds_stages * 3 && !(leds[i - 1].b > 255 - lightDelta))//increase blue
-        {
-          leds[i] = CRGB(leds[i - 1].r, leds[i - 1].g, leds[i - 1].b + lightDelta);
-        }
-        else if (i < leds_stages * 4 && !(leds[i - 1].g < lightDelta))//decrease green
-        {
-          leds[i] = CRGB(leds[i - 1].r, leds[i - 1].g - lightDelta, leds[i - 1].b);
-        }
-        else if (i < leds_stages * 7 && !(leds[i - 1].r > 255 - lightDelta))//increase red 
-        {
-          leds[i] = CRGB(leds[i - 1].r + lightDelta, leds[i - 1].g, leds[i - 1].b);
-        }
-      }
-      FastLED.show();
-      CheckForModeChange(100);
+      Rainbow();
     }
     //Mode 5 - Lightning mqueen
     if (Mode == 5)
@@ -250,52 +215,8 @@ void loop()
         CheckForModeChange(100);
         ModeAlreadyRan = 1;
       }
-      //make 3 cars on starting line
-      int startline_i = 10;
-      //leds[startline_i] = CRGB(255, 0, 0);
-      //leds[startline_i - 1] = CRGB(0, 255, 0);
-      //leds[startline_i - 2] = CRGB(0, 0, 255);
-      //leds[NUM_LEDS-1] = mqueen.colours_arr[0];
-      
-      String st = "Colours debug: ";
-      Serial.println(st+mqueen.colours_arr[0].r);
-      Serial.println(st+chick.colours_arr[0].g);
-      Serial.println(st+king.colours_arr[0].b);
-      mqueen.Move(leds, 4);
-      chick.Move(leds, 5);
-      king.Move(leds, 6);
-      LightGroup::RedrawGroups(leds); 
-      CheckForModeChange(300);
-
-      
-      //count down to race start
-      int countdown_i = 20;
-      leds[countdown_i] = CRGB(255, 200, 0);
-      leds[countdown_i + 1] = CRGB(255, 200, 0);
-      leds[countdown_i + 2] = CRGB(255, 200, 0);
-      FastLED.show();
-      CheckForModeChange(1000);
-      leds[countdown_i] = CRGB(0, 0, 0);
-      FastLED.show();
-      CheckForModeChange(1000);
-      leds[countdown_i + 1] = CRGB(0, 0, 0);
-      FastLED.show();
-      CheckForModeChange(1000);
-      leds[countdown_i + 2] = CRGB(0, 0, 0);
-      FastLED.show();
-      CheckForModeChange(1000);
-     
-      //race starts, loop for 200 laps
-      for(int j=0;j<50;j++){
-        for(int i=3;i<NUM_LEDS;i++){
-          mqueen.Move(leds,i);
-          chick.Move(leds,i-1);
-          king.Move(leds,i-2);
-          LightGroup::RedrawGroups(leds);
-          CheckForModeChange(18);
-        }
-      }
-    }
+      Cars();
+    } //end mode 5
     //Mode 4 - sashas's VISION - sunrise / set
     if (Mode == 4)
     {
@@ -407,10 +328,272 @@ void loop()
       }
     } //end mode 4
 
-    //Mode 3 - Valentines day mode
+    //Mode 3 - Canada day mode
     if (Mode == 3)
     {
-      if (ModeAlreadyRan == 0)
+      CanadaDay();
+    }
+    //Mode 2 - dim mode
+    if (Mode == 2)
+    {
+      DimMode();
+    }
+    //Mode 1 - pink lights
+    if (Mode == 1)
+    {
+     PinkLights(); 
+    }
+
+    //Mode 0 - flashing lights
+    if (Mode == 0)
+    {
+      FlashingLights();
+    } //end mode 0
+  }   //end if(ON)
+} //end loop
+
+bool CheckForModeChange(int t_delay)
+{
+  //check for a mode change while delaying
+  for (int i = 0; i < t_delay; i++)
+  {
+    if (irrecv.decode(&results)) // have we received an IR signal?
+    {
+      translateIR();
+      irrecv.resume(); // receive the next value
+      return true;
+    }
+    delay(1);
+  }
+  return false;
+}
+
+void PowerButton()
+{
+  ON ^= 1;
+  Serial.println(ON);
+  for (int i = 0; i <= NUM_LEDS; i++)
+  {
+    leds[i] = CRGB(0, 0, 0);
+    FastLED.show();
+  }
+}
+
+int Rainbow(){
+  //TotalRequiredPositions = 1275 (5*255)
+  bool modeChanged = false; 
+  if (ModeAlreadyRan == 0)
+      {
+        for (int i = 0; i < NUM_LEDS; i++)
+        {
+          leds[i] = CRGB(0, 0, 0);
+        }
+        FastLED.show();
+        modeChanged = CheckForModeChange(100);
+        if(modeChanged){return 0;}
+        ModeAlreadyRan = 1;
+      }
+      int colourCal = 20; //add artificial scaling for tweaking
+      int lightDelta = 1275 / NUM_LEDS;
+      int leds_stages = NUM_LEDS / 5;
+      leds[0] = CRGB(255, 0, 0);
+      //follow colour picker hue, discretized
+      for (int i = 1; i < NUM_LEDS; i++)
+      {
+        if (i < leds_stages * 1 && !(leds[i - 1].g > 255 - lightDelta)) //increase green
+        {                                                               //dont overflow colour mutation
+          leds[i] = CRGB(leds[i - 1].r, leds[i - 1].g + lightDelta, leds[i - 1].b);
+        }
+        else if (i < leds_stages * 2 && !(leds[i - 1].r < lightDelta)) //decrease red
+        {
+          leds[i] = CRGB(leds[i - 1].r - lightDelta, leds[i - 1].g, leds[i - 1].b);
+        }
+        else if (i < leds_stages * 3 && !(leds[i - 1].b > 255 - lightDelta)) //increase blue
+        {
+          leds[i] = CRGB(leds[i - 1].r, leds[i - 1].g, leds[i - 1].b + lightDelta);
+        }
+        else if (i < leds_stages * 4 && !(leds[i - 1].g < lightDelta)) //decrease green
+        {
+          leds[i] = CRGB(leds[i - 1].r, leds[i - 1].g - lightDelta, leds[i - 1].b);
+        }
+        else if (i < leds_stages * 7 && !(leds[i - 1].r > 255 - lightDelta)) //increase red
+        {
+          leds[i] = CRGB(leds[i - 1].r + lightDelta, leds[i - 1].g, leds[i - 1].b);
+        }
+      }
+      FastLED.show();
+      modeChanged =  CheckForModeChange(100);
+      if(modeChanged){return 0;}
+}
+
+int Cars()
+{
+  //make 3 cars on starting line
+  finishLine.Move(leds, 33);
+  mqueen.Move(leds, finishLine.position - 1);
+  chick.Move(leds, finishLine.position - 2);
+  king.Move(leds, finishLine.position - 3);
+  LightGroup::RedrawGroups(leds);
+  bool modeChanged = CheckForModeChange(300);
+  if(modeChanged){return 0;}
+
+  //count down to race start
+  int countdown_i = finishLine.position + 4;
+  leds[countdown_i] = CRGB(255, 150, 0);
+  leds[countdown_i + 1] = CRGB(255, 150, 0);
+  leds[countdown_i + 2] = CRGB(255, 150, 0);
+  FastLED.show();
+  leds[countdown_i] = CRGB(0, 0, 0);
+  FastLED.show();
+  CheckForModeChange(1000);
+  leds[countdown_i + 1] = CRGB(0, 0, 0);
+  FastLED.show();
+  CheckForModeChange(1000);
+  leds[countdown_i + 2] = CRGB(0, 0, 0);
+  FastLED.show();
+  CheckForModeChange(1000);
+
+  //race starts, loop for 200 laps
+  for (int j = 0; j < 10; j++)
+  {
+    for (int i = 3; i < NUM_LEDS; i++)
+    {
+      if (mqueen.position < NUM_LEDS - 1) //make cars wrap around led strip
+      {
+        mqueen.Move(leds, mqueen.position + 1);
+      }
+      else
+      {
+        mqueen.Move(leds, 0);
+      }
+      if (chick.position < NUM_LEDS - 1) //make cars wrap around led strip
+      {
+        chick.Move(leds, chick.position + 1);
+      }
+      else
+      {
+        chick.Move(leds, 0);
+      }
+      if (king.position < NUM_LEDS - 1) //make cars wrap around led strip
+      {
+        king.Move(leds, king.position + 1);
+      }
+      else
+      {
+        king.Move(leds, 0);
+      }
+      LightGroup::RedrawGroups(leds);
+      CheckForModeChange(20);
+    }
+  }
+  //loop one last time, but slow
+  for (int i = 10; i < 30; i++)
+  {
+    mqueen.Move(leds, i);
+    king.Move(leds, i - 4);
+    chick.Move(leds, i - 5);
+    LightGroup::RedrawGroups(leds);
+    modeChanged = CheckForModeChange(100);
+    if(modeChanged){return 0;}
+  }
+  //chick hits king
+  chick.Move(leds, king.position - 1);
+  LightGroup::RedrawGroups(leds);
+  modeChanged = CheckForModeChange(300);
+  if(modeChanged){return 0;}
+  for (int i = 0; i < 8; i++) //flash king red
+  {
+    king.ChangeColour(0, CRGB(255, 0, 0));
+    LightGroup::RedrawGroups(leds);
+    CheckForModeChange(100);
+    king.ChangeColour(0, CRGB(10, 7, 15));
+    LightGroup::RedrawGroups(leds);
+    if (CheckForModeChange(100))
+    {
+      return NULL;
+    }
+  }
+  king.ChangeColour(0, CRGB(10, 7, 15));
+  LightGroup::RedrawGroups(leds);
+  if (CheckForModeChange(1000))
+  {
+    return NULL;
+  }
+  //lightning stops
+  for (int i = 0; i < 2; i++)
+  {
+    mqueen.Move(leds, mqueen.position + 1);
+    chick.Move(leds, chick.position + 1);
+    LightGroup::RedrawGroups(leds);
+    if (CheckForModeChange(300))
+    {
+      return NULL;
+    }
+  }
+  //chick finishes
+  int tempFlash = 100;
+  for (int i = 0; i < abs(chick.position - finishLine.position) + 7; i++)
+  {
+    chick.Move(leds, chick.position + 1);
+    LightGroup::RedrawGroups(leds);
+    modeChanged = CheckForModeChange(tempFlash * 2);
+    if(modeChanged){return 0;}
+  }
+  for (int i = 0; i < 10; i++) //flash finish line gold
+  {
+    if (chick.position < NUM_LEDS - 2)
+    {
+      finishLine.ChangeColour(0, CRGB(255, 150, 0));
+      finishLine.ChangeColour(2, CRGB(255, 150, 0));
+      LightGroup::RedrawGroups(leds);
+      modeChanged = CheckForModeChange(tempFlash);
+      if(modeChanged){return 0;}
+      finishLine.ChangeColour(0, CRGB(255, 255, 255));
+      finishLine.ChangeColour(2, CRGB(255, 255, 255));
+      LightGroup::RedrawGroups(leds);
+      modeChanged = CheckForModeChange(tempFlash);
+      if(modeChanged){return 0;}
+      finishLine.ChangeColour(0, CRGB(255, 150, 0));
+      finishLine.ChangeColour(2, CRGB(255, 150, 0));
+      chick.Move(leds, chick.position + 1);
+      LightGroup::RedrawGroups(leds);
+      modeChanged = CheckForModeChange(tempFlash);
+      if(modeChanged){return 0;}
+      finishLine.ChangeColour(0, CRGB(255, 150, 0));
+      finishLine.ChangeColour(2, CRGB(255, 150, 0));
+      LightGroup::RedrawGroups(leds);
+    }
+  }
+  finishLine.ChangeColour(0, CRGB(100, 100, 100));
+  finishLine.ChangeColour(2, CRGB(100, 100, 100));
+  LightGroup::RedrawGroups(leds);
+  modeChanged =CheckForModeChange(1000);
+  if(modeChanged){return 0;}
+  //mqueen pushes king
+  for (int i = 0; mqueen.position != (king.position - 1); i++) //back up to get king
+  {
+    mqueen.Move(leds, mqueen.position - 1);
+    LightGroup::RedrawGroups(leds);
+    CheckForModeChange(100);
+  }
+  CheckForModeChange(1000);
+  for (int i = 0; king.position != (finishLine.position + 6); i++) //push king forward
+  {
+    mqueen.Move(leds, mqueen.position + 1);
+    king.Move(leds, king.position + 1);
+    LightGroup::RedrawGroups(leds);
+    CheckForModeChange(100);
+  }
+  king.ChangeColour(0, CRGB(0, 0, 255));
+  if (CheckForModeChange(100))
+  {
+    return NULL;
+  }
+}
+
+int CanadaDay(){
+  bool modeChanged = false;
+  if (ModeAlreadyRan == 0)
       {
         //go to center
         for (int i = 0; i <= 49 / 2; i++)
@@ -426,7 +609,8 @@ void loop()
             leds[49 - i + 1] = CRGB(0, 0, 0);
           leds[49 - i] = CRGB::White;
           FastLED.show();
-          CheckForModeChange(200);
+          modeChanged = CheckForModeChange(200);
+          if(modeChanged){return 0;}
         }
         CheckForModeChange(2000);
         ModeAlreadyRan = 1; //do not loop
@@ -439,46 +623,43 @@ void loop()
             leds[i] = CRGB::Red;
             leds[49 - i] = CRGB::Red;
             FastLED.show();
-            CheckForModeChange(20);
+            modeChanged = CheckForModeChange(20);
+            if(modeChanged){return 0;}
           }
           else
           {
             leds[i] = CRGB::White;
             leds[49 - i] = CRGB::White;
             FastLED.show();
-            CheckForModeChange(20);
+            modeChanged = CheckForModeChange(20);
+            if(modeChanged){return 0;}
           }
         }
       }
-    }
-    //Mode 2 - dim mode
-    if (Mode == 2)
-    {
+}
 
-      for (int i = 0; i <= 49; i += 9)
+int DimMode()
+{
+  bool modeChanged = false;
+      if(!ModeAlreadyRan)
+      {
+        for (int i = 0; i <= NUM_LEDS; i++)
+        {
+          leds[i] = CRGB(0,0,0);
+        }
+      }
+
+      for (int i = 0; i <= NUM_LEDS; i += 9)
       {
         leds[i] = CRGB(65, 15, 0);
         FastLED.show();
       }
-      CheckForModeChange(100);
-    }
-    //Mode 1 - pink lights
-    if (Mode == 1)
-    {
+      modeChanged = CheckForModeChange(100);
+      if(modeChanged){return 0;}
+}
 
-      CheckForModeChange(0);
-      for (int i = 0; i <= 49; i++)
-      {
-        leds[i] = CRGB::Fuchsia;
-        FastLED.show();
-        CheckForModeChange(100);
-      }
-    }
-
-    //Mode 0 - flashing lights
-    if (Mode == 0)
-    {
-      leds[40] = CRGB(0, 0, 0);
+int FlashingLights(){
+  leds[40] = CRGB(0, 0, 0);
       leds[39] = CRGB(0, 0, 0);
       FastLED.show();
       r = 150, g = 40, b = 0;
@@ -499,39 +680,19 @@ void loop()
         g -= 1;
         b += 5;
       }
-    } //end mode 0
-  }   //end if(ON)
-} //end loop
-
-void CheckForModeChange(int t_delay)
-{
-  //check for a mode change while delaying 
-  for (int i=0;i<t_delay;i++){
-    if (irrecv.decode(&results)) // have we received an IR signal?
-    {
-      translateIR();
-      irrecv.resume(); // receive the next value
-    }
-    delay(1);
-  }
-  //dont use for now
-  /*
-    if(digitalRead(3) == HIGH){
-    Mode +=1;
-    if(Mode >2)
-      Mode = 0;
-    }
-  */
-  
 }
 
-void PowerButton()
+int PinkLights()
 {
-  ON ^= 1;
-  Serial.println(ON);
-  for (int i = 0; i <= NUM_LEDS; i++)
-  {
-    leds[i] = CRGB(0, 0, 0);
-    FastLED.show();
-  }
+  bool modeChanged = CheckForModeChange(0);
+  if(modeChanged){return 0;}
+      for (int i = 0; i <= 49; i++)
+      {
+        leds[i] = CRGB::Fuchsia;
+        FastLED.show();
+        modeChanged = CheckForModeChange(100);
+        if(modeChanged){return 0;}
+      }
 }
+
+

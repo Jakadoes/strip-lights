@@ -31,6 +31,7 @@ void LightGroup::ChangeColour(int light_i, CRGB colour)//change a single light c
 {
     colours_arr[light_i] = colour; 
 }
+//RedrawGroups: NOTE: LightGroup objects constructed last will be drawn over ones constructed first if a conflict exists
 static void LightGroup::RedrawGroups(CRGB leds[]){
     for(int j=0;j<LIGHTGROUPS_USED;j++)
     {
